@@ -1,0 +1,111 @@
+import cv2
+import numpy as np
+import os
+import imutils
+from imutils.video import FPS
+from imutils.video import VideoStream
+import face_recognition
+import pickle
+import mediapipe as mp
+from multiprocessing import Process, Queue
+
+mp_face_detection = mp.solutions.face_detection
+
+def capture(q):
+    vs = VideoStream(src=0, framerate=30).start()
+
+    while True:
+        frame = vs.read()
+        q.put(frame)
+
+def face_recognition_worker(q, encodingsP):
+    data = pickle.loads(open(encodingsP, "rb").read())
+    fps = FPS().start()
+    currentname = "unknown"
+
+    with mp_face_detection.FaceDetection(
+            model_selection=0, min_detection_confidence=0.5) as face_detection:
+        while True:
+            if not q.empty():
+                frame = q.get()
+
+                # resize frame and convert BGR to RGB
+                frame = imutils.resize(frame, width=500)
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # detect faces using MediaPipe
+                results = face_detection.process(rgb)
+
+                boxes = []
+                encodings = []
+                names = []
+
+                if results.detections:
+                    for detection in results.detections:
+                        box = detection.location_data.relative_bounding_box
+                        h, w, c = frame.shape
+                        bounding_box = int(box.xmin*w), int(box.ymin*h), \
+                                       int(box.width*w), int(box.height*h)
+
+                        boxes.append(bounding_box)
+
+                        # extract face features using face_recognition library
+                        face = frame[bounding_box[1]:bounding_box[1]+bounding_box[3],
+                                     bounding_box[0]:bounding_box[0]+bounding_box[2]]
+                        rgb_face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+                        encoding = face_recognition.face_encodings(rgb_face)
+                        if encoding:
+                            encodings.append(encoding)
+
+                    # compare face features
+                    for encoding in encodings:
+                        matches = face_recognition.compare_faces(
+                            data["encodings"], encoding[0])
+                        name = "Unknown"
+
+                        if True in matches:
+                            matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+                            counts = {}
+
+                            for i in matchedIdxs:
+                                name = data["names"][i]
+                                counts[name] = counts.get(name, 0) + 1
+
+                            # determine which name to display
+                            name = max(counts, key=counts.get)
+
+                            if currentname != name:
+                                currentname = name
+                                print(currentname)
+
+                        names.append(name)
+
+                    for ((left, top, width, height), name) in zip(boxes, names):
+                        # draw rectangle and name tag on the face
+                        cv2.rectangle(frame, (left, top), (left+width, top+height),
+                                      (0, 255, 225), 2)
+                        y = top - 15 if top - 15 > 15 else top + 15
+                        cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+                                    .8, (0, 255, 255), 2)
+
+                cv2.imshow("Nhan dien khuon mat dang duoc chay", frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                break
+
+            fps.update()
+
+    fps.stop()
+    print("[INFO] FPS: {:.2f}".format(fps.fps()))
+
+if __name__ == '__main__':
+    encodingsP = "encodings.pickle"
+    q = Queue()
+    p1 = Process(target=capture, args=(q,))
+    p2 = Process(target=face_recognition_worker, args=(q, encodingsP,))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+    cv2.destroyAllWindows()
