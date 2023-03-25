@@ -1,0 +1,50 @@
+import cv2
+import os
+import numpy as np
+from PIL import Image
+import face_recognition
+
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+def getImagesAndLabels(path):
+    # Lấy tất cả các folder chứa ảnh khuôn mặt
+    user_folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+    #create empty face list
+    faceSamples = []
+    #create empty ID list
+    Ids = []
+    # Loop through all user folders
+    for user_folder in user_folders:
+        user_path = os.path.join(path, user_folder)
+        # Lấy tất cả các file trong thư mục
+        imagePaths = [os.path.join(user_path, f) for f in os.listdir(user_path) if f.endswith('.jpg')]
+        # Get the ID from the folder name
+        Id = int(user_folder.split('.')[0])
+        #now looping through all the image paths and loading the Ids and the images
+        for imagePath in imagePaths:
+            #loading the image and converting it to RGB format
+            image = face_recognition.load_image_file(imagePath)
+            # detect the faces in the image
+            face_locations = face_recognition.face_locations(image)
+            # get the encodings for the detected faces
+            face_encodings = face_recognition.face_encodings(image, face_locations)
+            # add the face encodings and the Ids to the lists
+            for face_encoding in face_encodings:
+                # resize the face encoding to a fixed length of 128
+                face_encoding = cv2.resize(face_encoding, (128,))
+                faceSamples.append(face_encoding)
+                Ids.append(Id)
+    return faceSamples, Ids
+
+
+# Get the face encodings and IDs for all users
+faceSamples, Ids = getImagesAndLabels('datafaces')
+
+# Train model to extract features from the face encodings and map them to employee IDs
+recognizer.train(faceSamples, np.array(Ids))
+
+# Save model
+recognizer.save('recognizer/trainner.yml')
+
+print("Trained!")
