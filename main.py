@@ -6,96 +6,80 @@ from imutils.video import FPS
 from imutils.video import VideoStream
 import face_recognition
 import pickle
-import mediapipe as mp
-
-mp_face_detection = mp.solutions.face_detection
+import threading
 
 vs = VideoStream(src=0, framerate=30).start()
 
 currentname = "unknown"
-#Xác định các khuôn mặt từ file encodings.pickle được tạo từ chương trình TrainAI
-
+# Xác định các khuôn mặt từ file encodings.pickle được tạo từ chương trình TrainAI
 encodingsP = "encodings.pickle"
+cascade = "haarcascade_frontalface_default.xml"
 
-#Đọc dữ liệu khuôn mặt đã được mã hóa và load file cascade
+# Đọc dữ liệu khuôn mặt đã được mã hóa và load file cascade
 data = pickle.loads(open(encodingsP, "rb").read())
+detector = cv2.CascadeClassifier(cascade)
 
 fps = FPS().start()
 
-with mp_face_detection.FaceDetection(
-    model_selection=0, min_detection_confidence=0.5) as face_detection:
+while True:
+    # Lấy Frame từ luồng video và thay đổi thành 500 pixel để xử lý nhanh hơn
+    frame = vs.read()
+    frame = imutils.resize(frame, width=500)
 
-    while True:
-        #Lấy Frame từ luồng video và thay đổi thành 500 pixel để xử lý nhanh hơn
-        frame = vs.read()
-        frame = imutils.resize(frame, width=500)
+    # Chuyển đổi Frame từ BGR sang Gray để phát diện khuôn mặt
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        #Chuyển đổi Frame từ BGR sang RGB để nhận diện khuôn mặt
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # Chuyển đổi Frame từ BGR sang RGB để nhận diện khuôn mặt
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        #Phát hiện khuôn mặt sử dụng MediaPipe
-        results = face_detection.process(rgb)
+    # Phát hiện khuôn mặt khi chuyển đổi Frame sang Gray
+    rects = detector.detectMultiScale(gray, scaleFactor=1.3,
+                                      minNeighbors=5, minSize=(30, 30),
+                                      flags=cv2.CASCADE_SCALE_IMAGE)
 
-        boxes = []
-        encodings = []
-        names = []
+    boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
+    encodings = face_recognition.face_encodings(rgb, boxes)
+    names = []
 
-        #So sánh khuôn mặt được đưa vào từ camera với dữ liệu khuôn mặt đã được train cho AI
-        if results.detections:
-            for detection in results.detections:
-                box = detection.location_data.relative_bounding_box
-                h, w, c = frame.shape
-                bounding_box = int(box.xmin*w), int(box.ymin*h), \
-                               int(box.width*w), int(box.height*h)
+    # So sánh khuôn mặt được đưa vào từ camera với dữ liệu khuôn mặt đã được train cho AI
+    for encoding in encodings:
+        matches = face_recognition.compare_faces(data["encodings"],
+                                                 encoding)
+        name = "Unknown"
 
-                boxes.append(bounding_box)
+        # Kiểm tra xem nếu khuôn mặt được đưa vào từ camera với dữ liệu khuôn mặt trùng nhau
+        if True in matches:
+            matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+            counts = {}
 
-                # Chiết xuất Feature của khuôn mặt sử dụng Face Recognition
-                face = frame[bounding_box[1]:bounding_box[1]+bounding_box[3],
-                             bounding_box[0]:bounding_box[0]+bounding_box[2]]
-                rgb_face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-                encoding = face_recognition.face_encodings(rgb_face)
-                if encoding:
-                    encodings.append(encoding)
+            for i in matchedIdxs:
+                name = data["names"][i]
+                counts[name] = counts.get(name, 0) + 1
 
-            # So sánh các Feature
-            for encoding in encodings:
-                matches = face_recognition.compare_faces(
-                    data["encodings"], encoding[0])
-                name = "Unknown"
+            # Xác định tên sẽ được hiện
+            name = max(counts, key=counts.get)
 
-                if True in matches:
-                    matchedIdxs = [i for (i, b) in enumerate(matches) if b]
-                    counts = {}
+            if currentname != name:
+                currentname = name
+                print(currentname)
 
-                    for i in matchedIdxs:
-                        name = data["names"][i]
-                        counts[name] = counts.get(name, 0) + 1
+        names.append(name)
 
-                    #Xác định tên sẽ được hiện
-                    name = max(counts, key=counts.get)
+        for ((top, right, bottom, left), name) in zip(boxes, names):
+            # Vẽ khung để hiển thị tên khuôn mặt
+            cv2.rectangle(frame, (left, top), (right, bottom),
+                          (0, 255, 225), 2)
+            y = top - 15 if top - 15 > 15 else top + 15
+            cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+                        .8, (0, 255, 255), 2)
 
-                    if currentname != name:
-                        currentname = name
-                        print(currentname)
+    cv2.imshow("Nhan dien khuon mat dang duoc chay", frame)
 
-                names.append(name)
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        break
 
-            for ((left, top, width, height), name) in zip(boxes, names):
-                # Vẽ khung để hiển thị tên khuôn mặt
-                cv2.rectangle(frame, (left, top), (left+width, top+height),
-                              (0, 255, 225), 2)
-                y = top - 15 if top - 15 > 15 else top + 15
-                cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-                            .8, (0, 255, 255), 2)
-
-        cv2.imshow("Nhan dien khuon mat dang duoc chay", frame)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-
-        fps.update()
+fps.update()
 
 fps.stop()
 print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
