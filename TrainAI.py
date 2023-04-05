@@ -1,42 +1,41 @@
-from imutils import paths
-import face_recognition
-import pickle
 import cv2
+import numpy as np
+from PIL import Image
 import os
 
-# Noi AI lay du lieu khuon mat de train
-print("[INFO] start processing faces...")
-imagePaths = list(paths.list_images("Faces"))
+# Path for face image database
+path = 'dataset'
 
-# Tạo ra danh sách khuôn mặt đã được mã hóa và tên
-knownEncodings = []
-knownNames = []
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml");
 
-# Vòng giúp lấy tất cả các ảnh khuôn mặt được lưu trữ
-for (i, imagePath) in enumerate(imagePaths):
-	#Lây tên người từ nơi chứa dữ liệu khuôn mặt
-	print("[INFO] processing image {}/{}".format(i + 1,
-		len(imagePaths)))
-	name = imagePath.split(os.path.sep)[-2]
+# function to get the images and label data
+def getImagesAndLabels(path):
 
-	# Chuyển định dạng ảnh từ BGR sang RGB
-	image = cv2.imread(imagePath)
-	rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    imagePaths = [os.path.join(path,f) for f in os.listdir(path)]
+    faceSamples=[]
+    ids = []
 
-	# Xác định tọa độ x,y của các khung tương ứng với từng ảnh dữ liệu
-	boxes = face_recognition.face_locations(rgb)
+    for imagePath in imagePaths:
 
-	# Trích xuất đặc trưng khuôn mặt
-	encodings = face_recognition.face_encodings(rgb, boxes)
+        PIL_img = Image.open(imagePath).convert('L') # convert it to grayscale
+        img_numpy = np.array(PIL_img,'uint8')
 
-	# Tương tự với tất cả những dữ liệu khác
-	for encoding in encodings:
-		knownEncodings.append(encoding)
-		knownNames.append(name)
+        id = int(os.path.split(imagePath)[-1].split(".")[1])
+        faces = detector.detectMultiScale(img_numpy)
 
-# Cho hết toàn bộ dữ liệu vào file encodings.pickle
-print("[INFO] serializing encodings...")
-data = {"encodings": knownEncodings, "names": knownNames}
-f = open("encodings.pickle", "wb")
-f.write(pickle.dumps(data))
-f.close()
+        for (x,y,w,h) in faces:
+            faceSamples.append(img_numpy[y:y+h,x:x+w])
+            ids.append(id)
+
+    return faceSamples,ids
+
+print ("\n [INFO] Training faces. It will take a few seconds. Wait ...")
+faces,ids = getImagesAndLabels(path)
+recognizer.train(faces, np.array(ids))
+
+# Save the model into trainer/trainer.yml
+recognizer.write('trainer/trainer.yml') # recognizer.save() worked on Mac, but not on Pi
+
+# Print the numer of faces trained and end program
+print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))

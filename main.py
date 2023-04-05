@@ -1,89 +1,68 @@
 import cv2
 import numpy as np
 import os
-import imutils
-from imutils.video import FPS
-from imutils.video import VideoStream
-import face_recognition
-import pickle
-import threading
 
-vs = VideoStream(src=0, framerate=30).start()
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+recognizer.read('trainer/trainer.yml')
+cascadePath = "haarcascade_frontalface_default.xml"
+faceCascade = cv2.CascadeClassifier(cascadePath);
 
-currentname = "unknown"
-# Xác định các khuôn mặt từ file encodings.pickle được tạo từ chương trình TrainAI
-encodingsP = "encodings.pickle"
-cascade = "haarcascade_frontalface_default.xml"
+font = cv2.FONT_HERSHEY_SIMPLEX
 
-# Đọc dữ liệu khuôn mặt đã được mã hóa và load file cascade
-data = pickle.loads(open(encodingsP, "rb").read())
-detector = cv2.CascadeClassifier(cascade)
+# iniciate id counter
+id = 0
 
-fps = FPS().start()
+# names related to ids: example ==> Marcelo: id=1,  etc
+names = ['None', 'TranVanPhuc']
+
+# Initialize and start realtime video capture
+cam = cv2.VideoCapture(0)
+cam.set(3, 640)  # set video widht
+cam.set(4, 480)  # set video height
+
+# Define min window size to be recognized as a face
+minW = 0.1 * cam.get(3)
+minH = 0.1 * cam.get(4)
 
 while True:
-    # Lấy Frame từ luồng video và thay đổi thành 500 pixel để xử lý nhanh hơn
-    frame = vs.read()
-    frame = imutils.resize(frame, width=500)
 
-    # Chuyển đổi Frame từ BGR sang Gray để phát diện khuôn mặt
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    ret, img = cam.read()
+    # img = cv2.flip(img, -1) # Flip vertically
 
-    # Chuyển đổi Frame từ BGR sang RGB để nhận diện khuôn mặt
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Phát hiện khuôn mặt khi chuyển đổi Frame sang Gray
-    rects = detector.detectMultiScale(gray, scaleFactor=1.3,
-                                      minNeighbors=5, minSize=(30, 30),
-                                      flags=cv2.CASCADE_SCALE_IMAGE)
+    faces = faceCascade.detectMultiScale(
+        gray,
+        scaleFactor=1.2,
+        minNeighbors=5,
+        minSize=(int(minW), int(minH)),
+    )
 
-    boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
-    encodings = face_recognition.face_encodings(rgb, boxes)
-    names = []
+    for (x, y, w, h) in faces:
 
-    # So sánh khuôn mặt được đưa vào từ camera với dữ liệu khuôn mặt đã được train cho AI
-    for encoding in encodings:
-        matches = face_recognition.compare_faces(data["encodings"],
-                                                 encoding)
-        name = "Unknown"
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        # Kiểm tra xem nếu khuôn mặt được đưa vào từ camera với dữ liệu khuôn mặt trùng nhau
-        if True in matches:
-            matchedIdxs = [i for (i, b) in enumerate(matches) if b]
-            counts = {}
+        id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
 
-            for i in matchedIdxs:
-                name = data["names"][i]
-                counts[name] = counts.get(name, 0) + 1
+        # Check if confidence is less them 100 ==> "0" is perfect match
+        if (confidence < 100):
+            id = names[id]
+            confidence = "  {0}%".format(round(100 - confidence))
 
-            # Xác định tên sẽ được hiện
-            name = max(counts, key=counts.get)
+        else:
+            id = "unknown"
+            confidence = "  {0}%".format(round(100 - confidence))
 
-            if currentname != name:
-                currentname = name
-                print(currentname)
+        cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
+        cv2.putText(img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
 
-        names.append(name)
+    cv2.imshow('camera', img)
 
-        for ((top, right, bottom, left), name) in zip(boxes, names):
-            # Vẽ khung để hiển thị tên khuôn mặt
-            cv2.rectangle(frame, (left, top), (right, bottom),
-                          (0, 255, 225), 2)
-            y = top - 15 if top - 15 > 15 else top + 15
-            cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-                        .8, (0, 255, 255), 2)
-
-    cv2.imshow("Nhan dien khuon mat dang duoc chay", frame)
-
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'):
+    k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
+    if k == 27:
         break
 
-fps.update()
-
-fps.stop()
-print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-print("[INFO] FPS: {:.2f}".format(fps.fps()))
-
+# Do a bit of cleanup
+print("\n [INFO] Exiting Program and cleanup stuff")
+cam.release()
 cv2.destroyAllWindows()
-vs.stop()
