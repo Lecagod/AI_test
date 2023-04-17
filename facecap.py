@@ -29,7 +29,8 @@ while(True):
 
         # Save the captured image into the datasets folder
         cv2.imwrite("dataset/"+ str(name)+ '.' + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
-
+        if not os.path.exists("dataset"):
+            os.makedirs("dataset")
         cv2.imshow('image', img)
 
     k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
