@@ -5,9 +5,7 @@ import subprocess
 from facecap import Face_Cap
 
 
-OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\hoang\Desktop\DESIGN\build\assets\frame1")
-
+OUTPUT_PATH = Path(__file__).parentASSETS_PATH = Path("assets/frame1")
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 def open_gui3():
