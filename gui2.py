@@ -1,17 +1,18 @@
 
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, messagebox
 import subprocess
 from facecap import Face_Cap
 
 
-OUTPUT_PATH = Path(__file__).parentASSETS_PATH = Path("assets/frame1")
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = Path("assets/frame1")
+
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 def open_gui3():
-    print(get_name(),"---",get_face_id())
-    Face_Cap(get_name(), get_face_id())
-    subprocess.Popen(["python", "gui3.py"])
+    check_entry()
+
 
 # Hàm xử lý sự kiện khi thoát ứng dụng
 def on_cancel(*args):
@@ -21,7 +22,15 @@ def get_name():
 
 def get_face_id():
     return entry_1.get()
-
+def check_entry():
+    if (entry_1.get() == "" or entry_2.get() == ""):
+        messagebox.showwarning("Lỗi Nhập Liệu", "Vui lòng nhập dữ liệu vào ô trống!")
+    else:
+        # Thực hien
+        print(get_name(), "---", get_face_id())
+        Face_Cap(get_name(), get_face_id())
+        subprocess.Popen(["python", "gui3.py"])
+        pass
 window = Tk()
 window.title("Face Recognition")
 window.geometry("972x587")
