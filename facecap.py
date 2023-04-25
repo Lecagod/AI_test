@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 import cv2
 import os
 
@@ -34,13 +36,19 @@ def Face_Cap(name, face_id):
 
             cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
             count += 1
+            if(count ==50):
+                messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
+                continue
+            if (count == 150):
+                messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
+                continue
 
             # Save the captured image into the datasets folder
             cv2.imwrite("dataset/"+ str(name)+ '.' + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
             if not os.path.exists("dataset"):
                 os.makedirs("dataset")
             cv2.imshow('image', img)
-
+            print("[Count] =", count)
         k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
         if k == 27:
             break
