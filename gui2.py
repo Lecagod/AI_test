@@ -98,7 +98,6 @@ class GUI2:
         width=151.0,
         height=61.0
     )
-
     entry_image_1 = PhotoImage(
         file=relative_to_assets("entry_1.png"))
     entry_bg_1 = canvas.create_image(
