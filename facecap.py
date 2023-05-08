@@ -49,11 +49,8 @@ def Face_Cap(name, face_id):
         
     
     while(True):
-        # t1 = threading.Thread(target=take_picture,args=cam)
-        # t1.start()
-        # t1.join()
         ret, img = cam.read()
-        if count <= 200:
+        if count <= 100:
             t1 = threading.Thread(target=save_picture,args=[img,count])
             t1.start()
             t1.join() 
@@ -64,7 +61,6 @@ def Face_Cap(name, face_id):
         k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
         if k == 27:
             break
-
     # Do a bit of cleanup
     print("\n [INFO] Exiting Program and cleanup stuff")
     cam.release()

@@ -20,7 +20,7 @@ def TEST():
     #         file_names.append(file_name.split(".")[0])
 
     # In tên các tệp tin trong mảng
-    print(file_names)
+    # print(file_names)
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.read('trainer/trainer.yml')
     cascadePath = "haarcascade_frontalface_default.xml"
@@ -40,8 +40,8 @@ def TEST():
     cam.set(4, 480)  # set video height
 
     # Define min window size to be recognized as a face
-    minW = 0.1 * cam.get(3)
-    minH = 0.1 * cam.get(4)
+    minW = 0.05 * cam.get(3)
+    minH = 0.05 * cam.get(4)
 
     while True:
 
@@ -53,26 +53,31 @@ def TEST():
         faces = faceCascade.detectMultiScale(
             gray,
             scaleFactor=1.2,
-            minNeighbors=5,
+            minNeighbors=2,
             minSize=(int(minW), int(minH)),
         )
-
+        names = db.get_list(cnx.cursor())
+        print(names)
+        def get_name_b_MSV(id,names):
+            for i,name,msv in names:
+                if i == id:
+                    return name
         for (x, y, w, h) in faces:
 
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
-            name = db.get_data_byMSV(cnx.cursor(),str(id))
+            
             
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence >= 50):
+            if (confidence < 100):
                 # fname = file_names[id]
-                fname = name
-                confidence = "  {0}%".format(round(confidence),2)
+                fname = get_name_b_MSV(id,names)
+                confidence = "  {0}".format(round(100-confidence),2)
 
             else:
                 fname = "unknown"
-                confidence = "  {0}%".format(round(confidence),2)
+                confidence = "  {0}".format(round(100-confidence),2)
 
             cv2.putText(img, str(fname), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
             cv2.putText(img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)

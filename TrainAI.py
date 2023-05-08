@@ -15,7 +15,7 @@ def TRAIN_DATA():
 
     #get list data not train
     def get_list_train():
-        train_list = db.get_list_to_train(cursor)
+        train_list = db.get_list(cursor)
         return train_list
     
     #update state in DB
@@ -28,27 +28,35 @@ def TRAIN_DATA():
         
         
     # function to get the images and label data
-    def getImagesAndLabels(path):
-
-        # imagePaths = [os.path.join(path,f) for f in os.listdir(path)] # chỉnh sửa đường dẫn
-        imageNames =os.listdir(path)
+    def getImagesAndLabels(listname):
+        imageNames =[]
+        listID =[]
+        for id,name,msv in listname:
+            path = getImagePath(name)
+            listImages= os.listdir(path)
+            for i in range(len(listImages)):
+                listImages[i]= path+listImages[i]
+                listID.append(id)
+            imageNames.extend(listImages)
         print(imageNames)
+       
+        # print(imageNames)
         faceSamples=[]
         ids = []
-
-        for imageName in imageNames:
-            imagePath = path+imageName
-            print(imagePath)
-            PIL_img = Image.open(imagePath).convert('L') # convert it to grayscale
+        print(listID)
+        for id in range(len(imageNames)):
+            
+            # print(imageNames[i])
+            PIL_img = Image.open(imageNames[id]).convert('L') # convert it to grayscale
             img_numpy = np.array(PIL_img,'uint8')
 
-            id = int(os.path.split(imagePath)[-1].split(".")[1])
-            print(id)
+            
+            print(listID[id])
             faces = detector.detectMultiScale(img_numpy)
 
             for (x,y,w,h) in faces:
                 faceSamples.append(img_numpy[y:y+h,x:x+w])
-                ids.append(id)
+                ids.append(listID[id])
 
         return faceSamples,ids
 
@@ -56,20 +64,21 @@ def TRAIN_DATA():
     
     #list name to train
     list_name = get_list_train()
-    print(list_name)
-    for name in list_name:
-        print(name)
-        path = getImagePath(name[0])
-        print(path)
-        faces,ids = getImagesAndLabels(path) #faces = name/
-        recognizer.train(faces, np.array(ids)) # train ??
-
-        # Save the model into trainer/trainer.yml
-        if not os.path.exists("trainer"):
-            os.makedirs("trainer")
-        recognizer.write('trainer/trainer.yml')
+    # paths =[]
+    # for name in list_name:
+    #     path = getImagePath(name[0])
+    #     paths.append(path)
+    #     print(path)
+    # print(list_name)    
+    faces,ids = getImagesAndLabels(list_name) #faces = name/
+    # print(ids)
+    recognizer.train(faces, np.array(ids)) # train ??
+   
+    # Save the model into trainer/trainer.yml
+    if not os.path.exists("trainer"):
+        os.makedirs("trainer")
+    recognizer.write('trainer/trainer.yml')       
         
-        update_state(name)
 
     # Print the numer of faces trained and end program
     print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))

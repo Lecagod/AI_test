@@ -48,8 +48,8 @@ def create_select_querry(face_name,MSV):
     return f"""SELECT	* FROM	`face_info` WHERE face_name = '{face_name}' AND MSV = '{MSV}'"""
 
 #tao cau lenh lay du lieu theo ten
-def create_select_querry_byName(name):
-    return f"""select * from `face_info` where face_name = '{name}'"""
+def create_selectID_querry_byName(name):
+    return f"""select `face_id` from `face_info` where face_name = '{name}'"""
 
 #lay du lieu theo id
 def create_select_querry_byMSV(MSV):
@@ -58,11 +58,10 @@ def create_select_querry_byMSV(MSV):
 def create_update_state_querry(face_name,MSV):
     return f"""UPDATE	`face_info` SET	IsTrain = 'Y' WHERE	face_name ='{face_name}' OR MSV = '{MSV}'"""
 
-def create_select_nottrain_querry():
-    return f"""SELECT	face_name, MSV FROM `face_info` WHERE IsTrain ='N'"""
+def create_select_list():
+    return f"""SELECT	face_id,face_name, MSV FROM `face_info` """
 
-def create_select_trained_querry():
-    return f"""SELECT	face_name, MSV FROM `face_info` WHERE IsTrain ='Y'"""
+
 
 #them du lieu vao database
 def insert_data(cnx,face_name,MSV):
@@ -73,8 +72,7 @@ def insert_data(cnx,face_name,MSV):
 
 #lay du lieu theo ten
 def get_data_byName(cursor,name):
-    
-    querry = create_select_querry_byName(name)
+    querry = create_selectID_querry_byName(name)
     return get_data_execute(cursor,querry)
 
 #lay du lieu theo id
@@ -91,11 +89,9 @@ def update_state(cnx,face_name,MSV):
     execute_querry(cnx.cursor(),querry)
     cnx.commit()
 
-def get_list_to_train(cursor):
-    return get_data_execute(cursor,create_select_nottrain_querry())
+def get_list(cursor):
+    return get_data_execute(cursor,create_select_list())
 
-def get_list_trained(cursor):
-    return get_data_execute(cursor,create_select_trained_querry())
 
 
 #cau lenh tao data base  
@@ -116,16 +112,22 @@ CREATE TABLE IF NOT EXISTS `face_info`   (
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB
 ;
-"""
+ """
 
-# # #Code chay:
-cnx = connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
-cursor = cnx.cursor()
-# insert_data(cnx,"Phuc","2019601247")
-# update_state(cnx,"Phuc","2019601247")
-# data = get_select_data(cursor,"Phuc","2019601247")
-# data = get_list_trained(cursor)
-#data = get_data_byName(cursor,"Name")
-data = get_data_byMSV(cursor,"2019601247")
-print(data)
-close_cnc(cnx)
+def get_name_b_MSV(MSV,names):
+            for name,msv in names:
+                if msv == MSV:
+                    return name
+
+# # # #Code chay:
+# cnx = connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
+# cursor = cnx.cursor()
+# # insert_data(cnx,"Phuc","2019601247")
+# # update_state(cnx,"Phuc","2019601247")
+# # data = get_select_data(cursor,"Phuc","2019601247")
+# # data = get_list_trained(cursor)
+# # #data = get_data_byName(cursor,"Name")
+# data = get_data_byName(cursor,"Viet")
+# print(data[0][0])
+
+# close_cnc(cnx)
