@@ -53,7 +53,7 @@ def Face_Cap(name, face_id):
         # t1.start()
         # t1.join()
         ret, img = cam.read()
-        if count <= 400:
+        if count <= 200:
             t1 = threading.Thread(target=save_picture,args=[img,count])
             t1.start()
             t1.join() 

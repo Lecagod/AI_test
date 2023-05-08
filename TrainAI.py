@@ -43,6 +43,7 @@ def TRAIN_DATA():
             img_numpy = np.array(PIL_img,'uint8')
 
             id = int(os.path.split(imagePath)[-1].split(".")[1])
+            print(id)
             faces = detector.detectMultiScale(img_numpy)
 
             for (x,y,w,h) in faces:

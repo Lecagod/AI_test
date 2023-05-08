@@ -9,8 +9,7 @@ def connect_to_db(host_ip,user_name,passwd,port,db):
             port = port,
             user = user_name,
             password = passwd,
-            database = db)
-           
+            database = db)    
        # print("connect successful")
     except mariadb.Error as e:
         print(f"Error: {e}")
@@ -33,7 +32,7 @@ def get_data_execute(cursor,querry):
     data = []
     try:      
         cursor.execute(querry)
-        print("execute successful")
+        # print("execute successful")
     except mariadb.Error as e:
         print(f"Error: {e}")
     for i in cursor:
@@ -54,10 +53,10 @@ def create_select_querry_byName(name):
 
 #lay du lieu theo id
 def create_select_querry_byMSV(MSV):
-    return f"""select * from `face_info` where MSV = {MSV}"""
+    return f"""select `face_name` from `face_info` where MSV = '{MSV}'"""
 
 def create_update_state_querry(face_name,MSV):
-    return f"""UPDATE	`face_info` SET	IsTrain = 'Y' WHERE	face_name ='{face_name}' AND MSV = '{MSV}'"""
+    return f"""UPDATE	`face_info` SET	IsTrain = 'Y' WHERE	face_name ='{face_name}' OR MSV = '{MSV}'"""
 
 def create_select_nottrain_querry():
     return f"""SELECT	face_name, MSV FROM `face_info` WHERE IsTrain ='N'"""
@@ -119,13 +118,14 @@ ENGINE=InnoDB
 ;
 """
 
-# # # #Code chay:
-# cnx = connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
-# cursor = cnx.cursor()
-# # insert_data(cnx,"Phuc","2019601247")
+# # #Code chay:
+cnx = connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
+cursor = cnx.cursor()
+# insert_data(cnx,"Phuc","2019601247")
 # update_state(cnx,"Phuc","2019601247")
-# # data = get_select_data(cursor,"Phuc","2019601247")
+# data = get_select_data(cursor,"Phuc","2019601247")
 # data = get_list_trained(cursor)
-# #data = get_data_byName(cursor,"Name")
-# print(data)
-# close_cnc(cnx)
+#data = get_data_byName(cursor,"Name")
+data = get_data_byMSV(cursor,"2019601247")
+print(data)
+close_cnc(cnx)

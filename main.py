@@ -63,8 +63,9 @@ def TEST():
 
             id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
             name = db.get_data_byMSV(cnx.cursor(),str(id))
+            
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence < 100):
+            if (confidence >= 50):
                 # fname = file_names[id]
                 fname = name
                 confidence = "  {0}%".format(round(confidence),2)
