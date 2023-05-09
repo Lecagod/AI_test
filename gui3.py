@@ -3,6 +3,8 @@ from pathlib import Path
 from TrainAI import TRAIN_DATA
 from main import TEST
 import  tkinter as tk
+# from tkinter import *
+# Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 
 
