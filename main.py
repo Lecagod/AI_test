@@ -12,15 +12,7 @@ def TEST():
 
     # Tạo một mảng để lưu tên các tệp tin
     file_names = os.listdir(folder_path)
-
-    # Lặp qua các tệp tin trong thư mục và thêm tên của từng tệp tin vào mảng
-    # for i, file_name in enumerate(os.listdir(folder_path)):
-    #     # Nếu số thứ tự của tệp tin là bội số của 100, thì thêm tên của tệp tin vào mảng
-    #     if i % 200 == 0:
-    #         file_names.append(file_name.split(".")[0])
-
-    # In tên các tệp tin trong mảng
-    # print(file_names)
+    
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.read('trainer/trainer.yml')
     cascadePath = "haarcascade_frontalface_default.xml"
@@ -30,9 +22,6 @@ def TEST():
 
     # iniciate id counter
     id = 0
-
-    # names related to ids: example ==> Marcelo: id=1,  etc
-    # names = ['None',"Hoang1","hoang2", "hoang3"]
 
     # Initialize and start realtime video capture
     cam = cv2.VideoCapture(0)
@@ -68,9 +57,8 @@ def TEST():
 
             id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
             
-            
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence < 100):
+            if (confidence < 50):
                 # fname = file_names[id]
                 fname = get_name_b_MSV(id,names)
                 confidence = "  {0}".format(round(100-confidence),2)

@@ -38,7 +38,6 @@ def TRAIN_DATA():
                 listImages[i]= path+listImages[i]
                 listID.append(id)
             imageNames.extend(listImages)
-        print(imageNames)
        
         # print(imageNames)
         faceSamples=[]
@@ -50,8 +49,6 @@ def TRAIN_DATA():
             PIL_img = Image.open(imageNames[id]).convert('L') # convert it to grayscale
             img_numpy = np.array(PIL_img,'uint8')
 
-            
-            print(listID[id])
             faces = detector.detectMultiScale(img_numpy)
 
             for (x,y,w,h) in faces:
@@ -64,22 +61,16 @@ def TRAIN_DATA():
     
     #list name to train
     list_name = get_list_train()
-    # paths =[]
-    # for name in list_name:
-    #     path = getImagePath(name[0])
-    #     paths.append(path)
-    #     print(path)
-    # print(list_name)    
-    faces,ids = getImagesAndLabels(list_name) #faces = name/
-    # print(ids)
-    recognizer.train(faces, np.array(ids)) # train ??
+      
+    faces,ids = getImagesAndLabels(list_name)
+    
+    recognizer.train(faces, np.array(ids))
    
     # Save the model into trainer/trainer.yml
     if not os.path.exists("trainer"):
         os.makedirs("trainer")
     recognizer.write('trainer/trainer.yml')       
         
-
     # Print the numer of faces trained and end program
     print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
     db.close_cnc(cnx)

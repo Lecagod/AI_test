@@ -16,7 +16,8 @@ def open_gui3():
 
 # Hàm xử lý sự kiện khi thoát ứng dụng
 def on_cancel():
-    window.quit()
+    window.destroy()
+    subprocess.Popen(["python", "gui1.py"])
 def get_name():
     return entry_1.get()
 
@@ -26,7 +27,7 @@ def check_entry():
     if (entry_1.get() == "" or entry_2.get() == ""):
         messagebox.showwarning("Lỗi Nhập Liệu", "Vui lòng nhập dữ liệu vào ô trống!")
     else:
-        cnx = db.connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
+        cnx = db.connect_to_db('127.0.0.1','root','hoang123',3306,"face_data")
         cursor = cnx.cursor()
         check = db.get_select_data(cursor,get_name(),get_MSV())
         
@@ -73,13 +74,17 @@ class GUI2:
 
     canvas.create_text(
         135.0,
-        101.0,
+        110.0,
         anchor="nw",
+        text="ENTER THE MSV",
+        fill="#FFFFFF",
+        font=("OpenSansRoman ExtraBold", 20 * -1)
+    )
+    canvas.create_text(
+        135.0, 250.0, anchor="nw",
         text="ENTER THE NAME",
         fill="#FFFFFF",
-        font=("OpenSansRoman ExtraBold", 40 * -1)
-    )
-
+        font=("OpenSansRoman ExtraBold", 20 * -1))
     button_image_1 = PhotoImage(
         file=relative_to_assets("button_1.png"))
     button_1 = Button(
@@ -102,7 +107,7 @@ class GUI2:
         image=button_image_2,
         borderwidth=0,
         highlightthickness=0,
-        command= on_cancel(),
+        command= on_cancel,
         relief="flat"
     )
     button_2.place(
@@ -134,7 +139,7 @@ class GUI2:
         file=relative_to_assets("entry_2.png"))
     entry_bg_2 = canvas.create_image(
         317.0,
-        232.5,
+        175.0,
         image=entry_image_2
     )
     entry_2 = Entry(
@@ -145,7 +150,7 @@ class GUI2:
     )
     entry_2.place(
         x=130.0,
-        y=210.0,
+        y=150.0,
         width=350.0,
         height=50.0
     )

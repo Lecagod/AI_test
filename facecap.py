@@ -12,15 +12,6 @@ def Face_Cap(name, face_id):
 
     face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-    # For each person, enter one numeric face id
-    # face_id = input('Nhap id: ')
-    # name = input("Nhap ten: ")
-    # name = get_name()
-    # face_id = get_face_id()
-    # print("Tên: " ,name)
-    # print("IDD: ", face_id)
-
-
     print("\n [INFO] Initializing face capture. Look the camera and wait ...")
     # Initialize individual sampling face count
     
@@ -32,25 +23,22 @@ def Face_Cap(name, face_id):
         for (x,y,w,h) in faces:
             
             cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
-            # if(count ==50):
-            #     messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
-            #     continue
-            # if (count == 150):
-            #     messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
-            #     continue
+            if(count ==100):
+                messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
+                continue
+            if (count == 200):
+                messagebox.showwarning("Cảnh báo", "Vui lòng xoay các góc mặt")
+                continue
             if not os.path.exists("dataset"):
                 os.makedirs("dataset")
             if not os.path.exists(f"dataset/{name}"):
                 os.makedirs(f"dataset/{name}")
             # Save the captured image into the datasets folder
             cv2.imwrite(f"dataset/{name}/"+ str(name)+ '.' + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
-            
-            
-        
-    
+               
     while(True):
         ret, img = cam.read()
-        if count <= 100:
+        if count <= 300:
             t1 = threading.Thread(target=save_picture,args=[img,count])
             t1.start()
             t1.join() 

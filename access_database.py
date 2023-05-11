@@ -55,9 +55,6 @@ def create_selectID_querry_byName(name):
 def create_select_querry_byMSV(MSV):
     return f"""select `face_name` from `face_info` where MSV = '{MSV}'"""
 
-def create_update_state_querry(face_name,MSV):
-    return f"""UPDATE	`face_info` SET	IsTrain = 'Y' WHERE	face_name ='{face_name}' OR MSV = '{MSV}'"""
-
 def create_select_list():
     return f"""SELECT	face_id,face_name, MSV FROM `face_info` """
 
@@ -84,50 +81,10 @@ def get_select_data(cursor,face_name,MSV):
     querry = create_select_querry(face_name,MSV)
     return get_data_execute(cursor,querry)
 
-def update_state(cnx,face_name,MSV):
-    querry = create_update_state_querry(face_name,MSV)
-    execute_querry(cnx.cursor(),querry)
-    cnx.commit()
-
 def get_list(cursor):
     return get_data_execute(cursor,create_select_list())
-
-
-
-#cau lenh tao data base  
-createDB_querry = """
-CREATE DATABASE IF NOT EXISTS `face_data`;
-"""
-#Cau lenh lua cho db luc tao
-select_DB = """USE `face_data`;"""
-
-#Cau lenh tao table
-createTB_querry ="""
-CREATE TABLE IF NOT EXISTS `face_info`   (
-	`face_id` INT(11) NOT NULL AUTO_INCREMENT,
-	`face_name` VARCHAR(50) NULL DEFAULT 'Human' COLLATE 'utf8mb4_general_ci',
-    `MSV` VARCHAR(10) NULL DEFAULT 'Ma sinh vien' COLLATE 'utf8mb4_general_ci',
-	PRIMARY KEY (`face_id`) USING BTREE
-)
-COLLATE='utf8mb4_general_ci'
-ENGINE=InnoDB
-;
- """
 
 def get_name_b_MSV(MSV,names):
             for name,msv in names:
                 if msv == MSV:
                     return name
-
-# # # #Code chay:
-# cnx = connect_to_db('127.0.0.1','root','vlo136fv',1306,'face_data')
-# cursor = cnx.cursor()
-# # insert_data(cnx,"Phuc","2019601247")
-# # update_state(cnx,"Phuc","2019601247")
-# # data = get_select_data(cursor,"Phuc","2019601247")
-# # data = get_list_trained(cursor)
-# # #data = get_data_byName(cursor,"Name")
-# data = get_data_byName(cursor,"Viet")
-# print(data[0][0])
-
-# close_cnc(cnx)
